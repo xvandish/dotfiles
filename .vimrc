@@ -18,6 +18,7 @@ Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 Plug 'antoinemadec/coc-fzf'
 Plug 'sonph/onehalf', { 'rtp': 'vim' }
+Plug 'reedes/vim-colors-pencil'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 Plug 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plug 'tpope/vim-fugitive'
@@ -25,23 +26,22 @@ Plug 'google/vim-jsonnet'
 Plug 'ayu-theme/ayu-vim'
 call plug#end()
 
-
-" if exists('+termguicolors')
-"   let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-"   let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
-"   set termguicolors
-" endif
+" Enable true color support
+if exists('+termguicolors')
+  let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+  let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+  set termguicolors
+endif
 
 syntax on
 " set t_Co=256
 
-" This line was added specifically to support this theme. With others, may not be necessary
+" This line was added specifically to support the pencil theme. With others, may not be necessary
 " highlight Comment gui=none cterm=none
 
-set termguicolors
-" let ayucolor="light"  " for light version of theme
-" let ayucolor="mirage" " for mirage version of theme
-let ayucolor="dark"   " for dark version of theme
+" let ayucolor="light"
+" let ayucolor="mirage"
+let ayucolor="dark"
 colorscheme ayu
 set background=dark
 
@@ -162,17 +162,60 @@ let g:mapleader = ","
 " Remove search highlight
 nnoremap <leader><space> :nohlsearch<CR>
 
+" Open splits faster
+nnoremap <silent> <Leader>v :vsplit<CR>
+nnoremap <silent> <Leader>h :split<CR>
+nnoremap <silent> <Leader>q :close<CR>
+
+" create tabs easier
+" nnoremap <Leader>n :$tabnew<CR>
+
+" Map tabs to explicit nums
+nnoremap <Leader>1 1gt
+nnoremap <Leader>2 2gt
+nnoremap <Leader>3 3gt
+nnoremap <Leader>4 4gt
+nnoremap <Leader>5 5gt
+nnoremap <Leader>6 6gt
+nnoremap <Leader>7 7gt
+nnoremap <Leader>8 8gt
+nnoremap <Leader>9 9gt
+
 " Fast saving
 nmap <leader>w :w!<cr>
 
-" Open Rg search
-nnoremap <leader>s :Rg<cr>
+" Fast previous buffer switching
+" Default is Control 6
+nnoremap <Backspace> <C-^>
 
-" Open File search
-nnoremap <leader>o :Files<cr>
+" Make Y only take whats after cursor, not whole line
+nnoremap Y y$ 
 
-" Open buffers
-nnoremap <leader>b :Buffers<cr>
+" Keeping things centered
+nnoremap J mzJ`z
+nnoremap {  {zz
+nnoremap }  }zz
+nnoremap n  nzz
+nnoremap N  Nzz
+nnoremap [c [czz
+nnoremap ]c ]czz
+nnoremap [j <C-o>zz
+nnoremap ]j <C-i>zz
+nnoremap [s [szz
+nnoremap ]s ]szz
+
+" Moving text
+vnoremap K :m '<-2<CR>gv=gv
+vnoremap J :m '>+1<CR>gv=gv
+
+" Store undo history, and don't destroy it when switching buffers
+let s:undodir = "/tmp/.undodir_" . $USER
+if !isdirectory(s:undodir)
+    call mkdir(s:undodir, "", 0700)
+endif
+let &undodir=s:undodir
+set undofile
+
 
 function! InsertDate()
   " Get the position of the cursor, if it is the start of the file we want
@@ -193,6 +236,9 @@ endfunction
 " Add a date timestamp between two new lines.
 nnoremap <leader>d :call InsertDate()<CR>
 
+
+
+
 " never do this again --> :set paste <ctrl-v> :set no paste
 " TODO: figure out why this causes a double escape
 " let &t_SI .= "\<Esc>[?2004h"
@@ -205,65 +251,6 @@ nnoremap <leader>d :call InsertDate()<CR>
 "   set paste
 "   return ""
 " endfunction
-
-" Search mappings: These will make it so that going to the next one in a
-" search will center on the line it's found in.
-nnoremap n nzzzv
-nnoremap N Nzzzv
-
-" When we open vim try and find the project root based on .git.
-function! FindGitRoot()
-  if &buftype ==? ''
-    " The function doesn't work with autochdir
-    set noautochdir
-
-    " The function only works with local directories
-    if expand('%:p') =~? '://'
-      return
-    endif
-
-    " Start in open file's directory
-    silent! lcd %:p:h
-    let l:liststart = 0
-
-    let l:pattern = '.git'
-    let l:fullpath = finddir(l:pattern, ';')
-
-    " Split the directory into path/match
-    let l:match = matchstr(l:fullpath, '\m\C[^\/]*$')
-    let l:path = matchstr(l:fullpath, '\m\C.*\/')
-
-    " $HOME + match
-    let l:home = $HOME . '/' . l:pattern
-
-    " If the search hits home try the next item in the list.
-    " Once a match is found break the loop.
-    if l:fullpath == l:home
-      let l:liststart = l:liststart + 1
-      lcd %:p:h
-    endif
-
-    " If path is anything but blank
-    if l:path !=? ''
-      exe 'lcd' . ' ' l:path
-    endif
-
-    if g:root#echo == 1 && l:match !=? ''
-      echom 'Found' l:match 'in' getcwd()
-    elseif g:root#echo == 1
-      echom 'Root dir not found'
-    endif
-  endif
-endfunction
-
-" Find the git directory root on open of vim.
-autocmd BufEnter * silent! FindGitRoot
-
-" Fresh vimrc
-nnoremap <leader>sv :source $MYVIMRC<CR>
-
-" Center the screen
-nnoremap <space> zz
 
 " ----------------------------------------- "
 " File Type settings 			    		"
@@ -452,10 +439,33 @@ endfunction
 
 command! -nargs=* -bang RG call RipgrepFzf(<q-args>, <bang>0)
 
+function! SearchVisualSelectionWithRg() range
+  let old_reg = getreg('"')
+  let old_regtype = getregtype('"')
+  let old_clipboard = &clipboard
+  set clipboard&
+  normal! ""gvy
+  let selection = getreg('"')
+  call setreg('"', old_reg, old_regtype)
+  let &clipboard = old_clipboard
+  execute 'Rg' selection
+endfunction
+
 " Path completion with custom source command
 inoremap <expr> <c-x><c-f> fzf#vim#complete#path('rg --files')
+
+" I want to add Buffers and Commits shortcuts
+nnoremap <silent> <leader>b :Buffers<CR>
+nnoremap <silent> <leader>c :Commits<CR>
+nnoremap <silent> <leader>o :Files<CR>
+" search the word under cursor, if none then just open the box like default
+nnoremap <silent> <Leader>s :Rg <C-R>=expand("<cword>")<CR><CR>
+nnoremap <silent> <Leader>ra :Lines <C-R><C-W><CR>
+vnoremap <silent> <Leader>rv :call SearchVisualSelectionWithRg()<CR>
+
+" later work on serch for the word under cursor
 
 " Chezmoi
 "
 " apply on save
-autocmd BufWritePost ~/.local/share/chezmoi/* ! chezmoi apply --source-path "%"
+" autocmd BufWritePost ~/.local/share/chezmoi/* ! chezmoi apply --source-path "%"
